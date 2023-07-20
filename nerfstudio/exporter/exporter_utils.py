@@ -155,12 +155,12 @@ def generate_point_cloud(
             view_direction = ray_bundle.directions
 
             # Filter points with opacity lower than 0.5
-            mask = rgba[..., -1] > 0.5
-            point = point[mask]
-            view_direction = view_direction[mask]
-            rgb = rgba[mask][..., :3]
-            if normal is not None:
-                normal = normal[mask]
+            #mask = rgba[..., -1] > 0.5
+            #point = point[mask]
+            #view_direction = view_direction[mask]
+            rgb = rgba #[mask] [..., :3]
+            #if normal is not None:
+            #    normal = normal[mask]
 
             if use_bounding_box:
                 comp_l = torch.tensor(bounding_box_min, device=point.device)
@@ -183,45 +183,8 @@ def generate_point_cloud(
             progress.advance(task, point.shape[0])
     points = torch.cat(points, dim=0)
     rgbs = torch.cat(rgbs, dim=0)
-    view_directions = torch.cat(view_directions, dim=0).cpu()
-
-    pcd = o3d.geometry.PointCloud()
-    pcd.points = o3d.utility.Vector3dVector(points.double().cpu().numpy())
-    pcd.colors = o3d.utility.Vector3dVector(rgbs.double().cpu().numpy())
-
-    ind = None
-    if remove_outliers:
-        CONSOLE.print("Cleaning Point Cloud")
-        pcd, ind = pcd.remove_statistical_outlier(nb_neighbors=20, std_ratio=std_ratio)
-        print("\033[A\033[A")
-        CONSOLE.print("[bold green]:white_check_mark: Cleaning Point Cloud")
-        if ind is not None:
-            view_directions = view_directions[ind]
-
-    # either estimate_normals or normal_output_name, not both
-    if estimate_normals:
-        if normal_output_name is not None:
-            CONSOLE.rule("Error", style="red")
-            CONSOLE.print("Cannot estimate normals and use normal_output_name at the same time", justify="center")
-            sys.exit(1)
-        CONSOLE.print("Estimating Point Cloud Normals")
-        pcd.estimate_normals()
-        print("\033[A\033[A")
-        CONSOLE.print("[bold green]:white_check_mark: Estimating Point Cloud Normals")
-    elif normal_output_name is not None:
-        normals = torch.cat(normals, dim=0)
-        if ind is not None:
-            # mask out normals for points that were removed with remove_outliers
-            normals = normals[ind]
-        pcd.normals = o3d.utility.Vector3dVector(normals.double().cpu().numpy())
-
-    # re-orient the normals
-    if reorient_normals:
-        normals = torch.from_numpy(np.array(pcd.normals)).float()
-        mask = torch.sum(view_directions * normals, dim=-1) > 0
-        normals[mask] *= -1
-        pcd.normals = o3d.utility.Vector3dVector(normals.double().cpu().numpy())
-
+    pcd =  torch.cat([points, rgbs], dim=1)
+    
     return pcd
 
 
