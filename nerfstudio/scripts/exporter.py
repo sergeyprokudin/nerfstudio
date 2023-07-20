@@ -154,11 +154,11 @@ class ExportPointCloud(Exporter):
 
         CONSOLE.print(f"[bold green]:white_check_mark: Generated {pcd}")
         CONSOLE.print("Saving Point Cloud...")
-        tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
+        #tpcd = o3d.t.geometry.PointCloud.from_legacy(pcd)
         # The legacy PLY writer converts colors to UInt8,
         # let us do the same to save space.
-        tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)  # type: ignore
-        o3d.t.io.write_point_cloud(str(self.output_dir / "point_cloud.ply"), tpcd)
+        # tpcd.point.colors = (tpcd.point.colors * 255).to(o3d.core.Dtype.UInt8)  # type: ignore
+        torch.save(pcd, str(self.output_dir / "point_cloud.pt"))
         print("\033[A\033[A")
         CONSOLE.print("[bold green]:white_check_mark: Saving Point Cloud")
 
